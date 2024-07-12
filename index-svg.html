@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+  <title>Cross-Browser QRCode generator for Javascript</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="qrcode.js"></script>
+</head>
+<body>
+  <input id="text" type="text" value="http://jindo.dev.naver.com/collie" style="width:80%" />
+  <button id="generateBtn">Generar Número Aleatorio</button>
+  <button id="downloadBtn">Descargar QR</button>
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="qrcode"/>
+  </svg>
+  <script type="text/javascript">
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+      width: 100,
+      height: 100,
+      useSVG: true
+    });
+
+    var generatedNumbers = new Set();
+
+    function makeCode() {
+      var elText = document.getElementById("text");
+
+      if (!elText.value) {
+        alert("Ingrese un texto");
+        elText.focus();
+        return;
+      }
+
+      qrcode.makeCode(elText.value);
+    }
+
+    makeCode();
+
+    $("#text").on("blur", function () {
+      makeCode();
+    }).on("keydown", function (e) {
+      if (e.keyCode == 13) {
+        makeCode();
+      }
+    });
+
+    function generateRandomNumber() {
+      let randomNumber;
+      do {
+        randomNumber = Math.floor(10000000 + Math.random() * 90000000);
+      } while (generatedNumbers.has(randomNumber));
+      
+      generatedNumbers.add(randomNumber);
+      document.getElementById("text").value = randomNumber;
+      makeCode();
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', generateRandomNumber);
+
+    // Función para descargar el QR como archivo JPG
+    document.getElementById('downloadBtn').addEventListener('click', function () {
+      var svg = document.getElementById('qrcode').querySelector('svg');
+      var svgData = new XMLSerializer().serializeToString(svg);
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var img = new Image();
+
+      img.onload = function () {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        var jpgData = canvas.toDataURL('image/jpeg');
+
+        var a = document.createElement('a');
+        a.href = jpgData;
+        a.download = 'qrcode.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(jpgData);
+      };
+
+      img.onerror = function() {
+        alert('Error al convertir el SVG a imagen');
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    });
+  </script>
+</body>
+</html>
